@@ -1,38 +1,47 @@
 const inquirer = require('inquirer');
 const fs = require('fs');
 const util = require('util');
-const {Circle, Square, Triangle} = require('./lib/shapes');
+const generateShape = require('./lib/generateShape');
+const {
+    isValidColorName,
+    isValidRGB,
+  } = require('is-valid-css-color');
 
-class Logo {
-    constructor() {
-        this.text = textComplete;
-        this.shape = shape;
-        this.textColor = textColor;
-        this.shapeColor = shapeColor;
-    }
-    render() {
-        return `<svg version=1.1 xmlns="https://www.w3.org/2000/svg" height="200px" width="300px">\n${this.text}\n${this.shape}</svg>>`
-    }
-    setText() {
-        text = `<text x="150" y="125" font-size="60" text-anchor="middle" fill="${text-color}">${textConplete}</text>"</text>`;
-    }
-    setShape() {
-        shape = shape.render();
-    }
-}
-
-const prompts = inquirer.prompt([
+//Inquirer questions array
+const prompts =
+    [
         {
         type: 'input',
         message: 'Enter up to 3 letters for your logo:',
-        name: 'text'
+        name: 'text',
         //Check that this is 1-3 letters long, not other chars
+        validate: function (text) {
+            if (text.length == 0 || text.length > 3) {
+              throw new Error("Logo text must be 1 to 3 characters long");
+            }
+            return true;
+          }
         },
         {
         type: 'input',
-        message: 'What color would you like your text to be?',
-        name: 'text-color'
-        //Return text color keyword or hexidecimals? / Validate entry
+        message: 'What color would you like your text to be? (Enter a color keyword OR a hexadecimal number)',
+        name: 'textColor',
+        // Validate entry exists
+        validate: function (input) {
+            if (!input) {
+                throw new Error("Input cannot be empty");
+            }
+            return true;
+        },
+        //Validate entry is color keyword or hexidecimal code
+        validate: function (input) {         
+            //Change all css named color to lowercase
+            input = input.toLowerCase();
+            if (isValidColorName(input) || isValidRGB(input)) {
+                return true;
+            }
+            throw new Error("Input cannot be empty");
+        }
         },
         {
         type: 'list',
@@ -42,40 +51,53 @@ const prompts = inquirer.prompt([
         },
         {
         type: 'input',
-        message: 'What color would you like your logo to be?',
-        name: 'shape-color'
+        message: 'What color would you like your logo to be? (Enter a color keyword OR a hexadecimal number)',
+        name: 'shapeColor',
+        //Validate entry exists
+        validate: function (shapeColor) {
+            if (!shapeColor) {
+                throw new Error("Input cannot be empty");
+            }
+            return true;
+        },
+        //Validate color keyword or hexidecimal code
+        validate: function (input) {         
+            //Change all css named color to lowercase
+            input = input.toLowerCase();
+            if (isValidColorName(input) || isValidRGB(input)) {
+                return true;
+            }
+            throw new Error("Please enter a vaild css color keyword or hex code")
         }
-]);
+        }
+];
 
-
-function createLogo(fileName, data) {
+//function to write logo.svg file
+function writeToFile(fileName, data) {
     fs.writeFile(fileName, data, err => {
         if (err) {
             return console.log(err);
         }
-        console.log("Successfully created logo.svg!");
+        console.log("Success!")
     });
-};
-
-const writeFileAsync = util.promisify(createLogo);
+}
+const writeFileAsync = util.promisify(writeToFile);
 
 // function to initialize program
 async function init() {
     try{
-        // Run user through prompts,send prompts to generateMarkdown module, then writeFile
+        // Run user through prompts,send prompts to generateShape module, then writeFile
         const responses = await inquirer.prompt(prompts);
-        console.log('Your Responses: ', responses);
-
-        const newLogo = new Logo(responses);
-
-        await writeFileAsync('logo.svg', newLogo);   
-
+        console.log('Your Response: ', responses);
+        console.log('Rendering logo...');
+        //shapeFile undefined currently
+        const shapeFile = generateShape(responses);
+        await writeFileAsync('logo.svg', shapeFile);   
     } catch  (error) {
         console.error();
     }
 
 }
 
+// function call to initialize program
 init();
-
-
