@@ -78,7 +78,7 @@ function writeToFile(fileName, data) {
         if (err) {
             return console.log(err);
         }
-        console.log("Success!")
+        console.log("Generated logo.svg")
     });
 }
 const writeFileAsync = util.promisify(writeToFile);
